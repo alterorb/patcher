@@ -5,14 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyFactory;
-import java.security.KeyPairGenerator;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 
 public class Bootstrap {
 
@@ -26,38 +22,25 @@ public class Bootstrap {
         }
         Files.createDirectories(options.outDir());
 
-        KeyFactory factory = KeyFactory.getInstance("RSA");
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(2048);
+        var keyManager = RSAKeyFactory.create();
 
         var publicKeyPath = options.publicKeyPath();
         RSAPublicKeySpec newKeySpec;
 
         if (publicKeyPath == null) {
-            LOGGER.info("Generating a new RSA KeyPair...");
-            var keyPair = keyGen.generateKeyPair();
-            var keyOutDir = options.outDir().resolve("rsakey");
-            Files.createDirectories(keyOutDir);
-
-            try (var out = Files.newOutputStream(keyOutDir.resolve("rsa-private.key"))) {
-                out.write(keyPair.getPrivate().getEncoded());
-            }
-            try (var out = Files.newOutputStream(keyOutDir.resolve("rsa-public.key"))) {
-                out.write(keyPair.getPublic().getEncoded());
-            }
-            newKeySpec = factory.getKeySpec(keyPair.getPublic(), RSAPublicKeySpec.class);
+            newKeySpec = generateKeyPair(keyManager, options.outDir().resolve("rsakey"));
         } else {
             if (!Files.exists(publicKeyPath)) {
                 throw new IllegalArgumentException("Public key file doesn't exist");
             }
-            newKeySpec = loadPublicKeySpec(factory, Files.newInputStream(publicKeyPath));
+            newKeySpec = keyManager.publicKeySpecFrom(Files.newInputStream(publicKeyPath));
         }
         var inputStream = Bootstrap.class.getResourceAsStream("/original-rsa-pubkey.key");
 
         if (inputStream == null) {
             throw new IllegalStateException("Original rsa pubkey is missing!");
         }
-        var oldKeySpec = loadPublicKeySpec(factory, inputStream);
+        var oldKeySpec = keyManager.publicKeySpecFrom(inputStream);
 
         var patcher = Patcher.create(oldKeySpec, newKeySpec);
 
@@ -73,13 +56,18 @@ public class Bootstrap {
         }
     }
 
-    private static RSAPublicKeySpec loadPublicKeySpec(KeyFactory factory, InputStream inputStream) throws IOException, InvalidKeySpecException {
-        var bytes = inputStream.readAllBytes();
-        var encodedKeySpec = new X509EncodedKeySpec(bytes);
+    private static RSAPublicKeySpec generateKeyPair(RSAKeyFactory keyManager, Path outDir) throws IOException, InvalidKeySpecException {
+        LOGGER.info("Generating a new RSA KeyPair...");
+        var keyPair = keyManager.generateKeyPair();
+        Files.createDirectories(outDir);
 
-        var publicKey = factory.generatePublic(encodedKeySpec);
-
-        return factory.getKeySpec(publicKey, RSAPublicKeySpec.class);
+        try (var out = Files.newOutputStream(outDir.resolve("rsa-private.key"))) {
+            out.write(keyPair.getPrivate().getEncoded());
+        }
+        try (var out = Files.newOutputStream(outDir.resolve("rsa-public.key"))) {
+            out.write(keyPair.getPublic().getEncoded());
+        }
+        return keyManager.publicKeySpecFrom(keyPair);
     }
 
     private static Options parseOptions(String[] args) {
