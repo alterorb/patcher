@@ -12,6 +12,8 @@
         <maven.compiler.release>16</maven.compiler.release>
         <asm.version>9.2</asm.version>
         <jopt.version>5.0.4</jopt.version>
+        <okio.version>1.17.5</okio.version>
+        <jackson.version>2.13.0</jackson.version>
         <slf4j.version>1.7.32</slf4j.version>
         <logback.version>1.2.5</logback.version>
     </properties>
@@ -31,6 +33,16 @@
             <groupId>net.sf.jopt-simple</groupId>
             <artifactId>jopt-simple</artifactId>
             <version>${jopt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okio</groupId>
+            <artifactId>okio</artifactId>
+            <version>${okio.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
