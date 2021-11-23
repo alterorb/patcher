@@ -6,14 +6,22 @@ import net.alterorb.patcher.transformer.RSAPubKeyReplacer;
 import net.alterorb.patcher.transformer.Transformer;
 import net.alterorb.patcher.transformer.ZStringArrayInliner;
 import net.alterorb.patcher.transformer.ZStringDecrypter;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 
 public class Patcher {
 
@@ -98,10 +106,52 @@ public class Patcher {
 
     private void patch(Path source, Path target) throws IOException {
         LOGGER.info("Patching {}", target.getFileName());
-        var classNodes = JarUtils.loadJar(source);
+        var classNodes = loadJar(source);
         for (Transformer transformer : transformers) {
             transformer.transform(classNodes);
         }
-        JarUtils.saveJar(target, classNodes);
+        saveJar(target, classNodes);
+    }
+
+    private void saveJar(Path target, List<ClassNode> classNodes) throws IOException {
+
+        try (var output = new JarOutputStream(Files.newOutputStream(target, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+            for (var node : classNodes) {
+                var entry = new JarEntry(node.name + ".class");
+                output.putNextEntry(entry);
+
+                var writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                node.accept(writer);
+                output.write(writer.toByteArray());
+
+                output.closeEntry();
+            }
+        }
+    }
+
+    private List<ClassNode> loadJar(Path pathToJar) throws IOException {
+        return loadJar(pathToJar, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    }
+
+    private List<ClassNode> loadJar(Path pathToJar, int parsingOptions) throws IOException {
+        List<ClassNode> classNodes = new ArrayList<>();
+
+        try (var jarFile = new JarFile(pathToJar.toString())) {
+            var enums = jarFile.entries();
+
+            while (enums.hasMoreElements()) {
+                var entry = (JarEntry) enums.nextElement();
+
+                if (!entry.getName().endsWith(".class")) {
+                    continue;
+                }
+                var classReader = new ClassReader(jarFile.getInputStream(entry));
+                var classNode = new ClassNode();
+
+                classReader.accept(classNode, parsingOptions);
+                classNodes.add(classNode);
+            }
+        }
+        return classNodes;
     }
 }
