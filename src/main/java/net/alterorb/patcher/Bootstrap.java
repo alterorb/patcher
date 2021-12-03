@@ -1,6 +1,7 @@
 package net.alterorb.patcher;
 
 import joptsimple.OptionParser;
+import joptsimple.OptionSpecBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,10 @@ public class Bootstrap {
     private static Options parseOptions(String[] args) {
         var parser = new OptionParser();
         var pathConverter = new PathValueConverter();
+
+        var patchArg = parser.accepts("patch");
+        var gencfgArg = parser.accepts("gencfg");
+
         var srcDirArg = parser.accepts("src")
                               .withRequiredArg()
                               .describedAs("The source directory")
