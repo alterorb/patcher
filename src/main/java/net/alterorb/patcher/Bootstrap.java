@@ -1,7 +1,6 @@
 package net.alterorb.patcher;
 
 import joptsimple.OptionParser;
-import joptsimple.OptionSpecBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +58,7 @@ public class Bootstrap {
         );
     }
 
-    public static record Options(
+    public record Options(
             Path srcDir,
             Path outDir,
             Path pubKeyPath
