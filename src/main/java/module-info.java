@@ -1,4 +1,5 @@
 module net.alterorb.patcher {
+    requires java.net.http;
     requires org.slf4j;
     requires org.objectweb.asm.tree;
     requires jopt.simple;

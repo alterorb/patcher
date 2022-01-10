@@ -46,8 +46,7 @@ public class Bootstrap {
                               .withValuesConvertedBy(pathConverter);
         var keypairArg = parser.accepts("pubkey")
                                .withRequiredArg()
-                               .describedAs("The pubkey that will be used as replacement, if none is provided, a new keypair will be generated.")
-                               .withValuesConvertedBy(pathConverter);
+                               .describedAs("The pubkey that will be used as replacement, if none is provided, a new keypair will be generated.");
 
         var options = parser.parse(args);
 
@@ -61,7 +60,7 @@ public class Bootstrap {
     public record Options(
             Path srcDir,
             Path outDir,
-            Path pubKeyPath
+            String pubKeyPath
     ) {
 
     }

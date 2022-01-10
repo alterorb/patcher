@@ -13,8 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
@@ -37,10 +42,10 @@ public class Patcher {
         this.outDir = targetDir;
     }
 
-    public static Patcher create(Path sourceDir, Path targetDir, Path pubKeyPath) {
+    public static Patcher create(Path sourceDir, Path targetDir, String pubKey) {
         var keyFactory = RSAKeyFactory.create();
         RSAPublicKeySpec oldKeySpec = loadOriginalPubKey(keyFactory);
-        RSAPublicKeySpec newKeySpec = loadOrGenerateNewPubKey(keyFactory, pubKeyPath, targetDir);
+        RSAPublicKeySpec newKeySpec = loadOrGenerateNewPubKey(keyFactory, pubKey, targetDir);
 
         var transformers = List.of(
                 new ZStringDecrypter(),
@@ -52,19 +57,39 @@ public class Patcher {
         return new Patcher(transformers, sourceDir, targetDir);
     }
 
-    private static RSAPublicKeySpec loadOrGenerateNewPubKey(RSAKeyFactory keyFactory, Path pubKeyPath, Path targetDir) {
+    private static RSAPublicKeySpec loadOrGenerateNewPubKey(RSAKeyFactory keyFactory, String pubKey, Path targetDir) {
         try {
-            if (pubKeyPath == null) {
+            if (pubKey == null) {
                 return generateKeyPair(keyFactory, targetDir.resolve("rsakey"));
             } else {
-                if (!Files.exists(pubKeyPath)) {
-                    throw new IllegalArgumentException("Public key file doesn't exist");
+                if (pubKey.startsWith("http://") || pubKey.startsWith("https://")) {
+                    return loadPubKeyFromUrl(keyFactory, URI.create(pubKey));
+                } else {
+                    return loadPubKeyFromFile(keyFactory, Paths.get(pubKey));
                 }
-                return keyFactory.publicKeySpecFrom(Files.newInputStream(pubKeyPath));
             }
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Failed to load or generate a new rsa public key", e);
         }
+    }
+
+    private static RSAPublicKeySpec loadPubKeyFromUrl(RSAKeyFactory keyFactory, URI uri) throws IOException, InterruptedException {
+        var client = HttpClient.newHttpClient();
+        var request = HttpRequest.newBuilder(uri)
+                                 .build();
+        var response = client.send(request, BodyHandlers.ofInputStream());
+
+        try (var inputStream = response.body()) {
+            return keyFactory.publicKeySpecFrom(inputStream);
+        }
+    }
+
+    private static RSAPublicKeySpec loadPubKeyFromFile(RSAKeyFactory keyFactory, Path path) throws IOException {
+
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Public key file doesn't exist");
+        }
+        return keyFactory.publicKeySpecFrom(Files.newInputStream(path));
     }
 
     private static RSAPublicKeySpec generateKeyPair(RSAKeyFactory keyManager, Path outDir) throws IOException {

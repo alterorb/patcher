@@ -11,11 +11,11 @@ A CLI application to patch the original FunOrb jars.
 
 ### Command line parameters
 
-| Arg | Required | Description |
-| --- | :---: | --- |
-| src | yes | A source directory containing the original jar files |
-| out | yes | The output directory |
-| pubkey | no | A file containing a x509 encoded RSA public key to be used as replacement, if this is not provided, a keypair is generated and saved to the output directory |
+| Arg    | Required | Description                                                                                                                                                         |
+|--------|:--------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| src    |   yes    | A source directory containing the original jar files                                                                                                                |
+| out    |   yes    | The output directory                                                                                                                                                |
+| pubkey |    no    | A file or URL containing a x509 encoded RSA public key to be used as replacement, if this is not provided, a keypair is generated and saved to the output directory |
 
 
 ### Original jar sha256 sums
