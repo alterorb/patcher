@@ -14,7 +14,7 @@ import java.security.spec.X509EncodedKeySpec;
 public record RSAKeyFactory(KeyFactory factory, KeyPairGenerator generator) {
 
     private static final String ALGORITHM = "RSA";
-    private static final int KEY_SIZE = 2048;
+    private static final int KEY_SIZE = 512;
 
     public static RSAKeyFactory create() {
         try {
