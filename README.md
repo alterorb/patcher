@@ -11,16 +11,18 @@ A CLI application to patch the original FunOrb jars.
 
 ### Command line parameters
 
-| Arg    | Required | Description                                                                                                                                                         |
-|--------|:--------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| src    |   yes    | A source directory containing the original jar files                                                                                                                |
-| out    |   yes    | The output directory                                                                                                                                                |
-| pubkey |    no    | A file or URL containing a x509 encoded RSA public key to be used as replacement, if this is not provided, a keypair is generated and saved to the output directory |
-
+| Arg    |     Required     | Description                                                                                                                                                         |
+|--------|:----------------:|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| patch  |    yes (task)    | Indicates that the patch games task should be run                                                                                                                   |
+| gencfg |    yes (task)    | Indicates that the generate launcher config task should be run                                                                                                      | 
+| src    | yes (task/patch) | A source directory containing the jar files                                                                                                                         |
+| out    |   yes (patch)    | The output directory                                                                                                                                                |
+| pubkey |    no (patch)    | A file or URL containing a x509 encoded RSA public key to be used as replacement, if this is not provided, a keypair is generated and saved to the output directory |
 
 ### Original jar sha256 sums
 
 In order to reproduce the jars available from AlterOrb, you'll need the original game jars matching the following sha256 sums:
+
 ```
 00d93f10c0c917c825f0c3cad3dfeb3f367dc820bdbffd921e89757be9f53f84 36cardtrick.jar
 8bd2dd298eb396debdf580fb0e5b779e9b62cd9f8ea992e6370670c8c8d71c14 aceofskies.jar
@@ -66,5 +68,10 @@ a1e96b157dcc8c9bca3c449ee7835e68f77cd279729152618f9e22648c14c815 transmogrify.ja
 1890dd89afc260a227390c3971da25625215a33c08dd4e5f3724d87da4491f48 wizardrun.jar
 1ea9b1bcc9f4e2474a160d4e43dc73edb083942b1bf2c81cf8f66c01d1b1455f zombiedawn.jar
 728378b59694aec182a96eda6f5878cf853b466aab05208fce6ae0f526b9c789 zombiedawnmulti.jar
+```
 
+### Patching the games:
+
+```
+java -jar patcher.jar --patch --src funorb-jars --out funorb-jars/patched --pubkey https://static.alterorb.net/launcher/v3/rsa-public.key 
 ```
