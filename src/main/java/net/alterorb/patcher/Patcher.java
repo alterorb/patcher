@@ -63,6 +63,7 @@ public class Patcher {
                 return generateKeyPair(keyFactory, targetDir.resolve("rsakey"));
             } else {
                 if (pubKey.startsWith("http://") || pubKey.startsWith("https://")) {
+                    LOGGER.info("Loading pubkey from {}", pubKey);
                     return loadPubKeyFromUrl(keyFactory, URI.create(pubKey));
                 } else {
                     return loadPubKeyFromFile(keyFactory, Paths.get(pubKey));

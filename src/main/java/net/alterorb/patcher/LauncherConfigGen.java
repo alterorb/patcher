@@ -20,10 +20,14 @@ public class LauncherConfigGen {
     private final String launcherVersion;
     private final Path jarPaths;
 
-    public LauncherConfigGen(String server, String launcherVersion, Path jarPaths) {
+    private LauncherConfigGen(String server, String launcherVersion, Path jarPaths) {
         this.server = server;
         this.launcherVersion = launcherVersion;
         this.jarPaths = jarPaths;
+    }
+
+    public static LauncherConfigGen create(String server, String launcherVersion, Path jarPaths) {
+        return new LauncherConfigGen(server, launcherVersion, jarPaths);
     }
 
     public void generate() throws IOException {
@@ -53,12 +57,12 @@ public class LauncherConfigGen {
         var launcherConfig = new LauncherConfig(launcherVersion, server, gameConfigs);
 
         var mapper = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        var resolve = jarPaths.resolve("config.json");
+        var configPath = jarPaths.resolve("config.json");
 
-        try (var writer = Files.newBufferedWriter(resolve)) {
+        try (var writer = Files.newBufferedWriter(configPath)) {
             mapper.writeValue(writer, launcherConfig);
         }
-        LOGGER.info("Generated launcher config with {} games", launcherConfig.games().size());
+        LOGGER.info("Generated launcher config with {} games to file {}", launcherConfig.games().size(), configPath);
     }
 
     private int calculateCrc32(Path jarPath) throws IOException {
@@ -77,7 +81,7 @@ public class LauncherConfigGen {
         }
     }
 
-    public static record GameConfig(
+    public record GameConfig(
             String name,
             String internalName,
             String mainClass,
@@ -87,7 +91,7 @@ public class LauncherConfigGen {
 
     }
 
-    public static record LauncherConfig(
+    public record LauncherConfig(
             String version,
             String server,
             List<GameConfig> games
