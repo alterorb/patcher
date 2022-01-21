@@ -1,5 +1,6 @@
 package net.alterorb.patcher;
 
+import net.alterorb.patcher.transformer.CacheRedirector;
 import net.alterorb.patcher.transformer.CheckhostTransformer;
 import net.alterorb.patcher.transformer.Jdk9MouseFixer;
 import net.alterorb.patcher.transformer.RSAPubKeyReplacer;
@@ -52,7 +53,8 @@ public class Patcher {
                 new ZStringArrayInliner(),
                 new CheckhostTransformer(),
                 new Jdk9MouseFixer(),
-                new RSAPubKeyReplacer(oldKeySpec, newKeySpec)
+                new RSAPubKeyReplacer(oldKeySpec, newKeySpec),
+                new CacheRedirector()
         );
         return new Patcher(transformers, sourceDir, targetDir);
     }
