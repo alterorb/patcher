@@ -1,6 +1,7 @@
 package net.alterorb.patcher;
 
 import joptsimple.OptionParser;
+import joptsimple.ValueConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,12 +15,10 @@ public class Bootstrap {
     public static void main(String[] args) {
         var options = parseOptions(args);
 
-        if (options instanceof PatcherOptions patcherOptions) {
-            launchPatcher(patcherOptions);
-        } else if (options instanceof ConfigGenOptions configGenOptions) {
-            launchConfigGen(configGenOptions);
-        } else {
-            LOGGER.error("Unknown task");
+        switch (options) {
+            case PatcherOptions patcherOptions -> launchPatcher(patcherOptions);
+            case ConfigGenOptions configGenOptions -> launchConfigGen(configGenOptions);
+            case null, default -> LOGGER.error("Unsupported/unknown task");
         }
     }
 
@@ -99,6 +98,24 @@ public class Bootstrap {
                     options.valueOf(versionArg)
             );
         } else {
+            return null;
+        }
+    }
+
+    private static class PathValueConverter implements ValueConverter<Path> {
+
+        @Override
+        public Path convert(String value) {
+            return Path.of(value);
+        }
+
+        @Override
+        public Class<? extends Path> valueType() {
+            return Path.class;
+        }
+
+        @Override
+        public String valuePattern() {
             return null;
         }
     }

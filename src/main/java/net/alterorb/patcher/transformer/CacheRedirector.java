@@ -10,16 +10,12 @@ import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Hashtable;
 import java.util.List;
 
 public class CacheRedirector implements Transformer {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CacheRedirector.class);
 
     private static final String JAGEX_STORE = ".jagex_cache_";
 

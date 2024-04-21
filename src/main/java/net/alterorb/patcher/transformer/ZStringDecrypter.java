@@ -140,7 +140,7 @@ public class ZStringDecrypter implements Transformer {
         return new String(encrypted);
     }
 
-    private static record DecryptionKeys(int stringKey, byte[] charsKey) {
+    private record DecryptionKeys(int stringKey, byte[] charsKey) {
 
     }
 }
