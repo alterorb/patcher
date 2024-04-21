@@ -1,16 +1,18 @@
 package net.alterorb.patcher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okio.HashingSink;
-import okio.Okio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.zip.CRC32;
 
 public class LauncherConfigGen {
 
@@ -66,18 +68,34 @@ public class LauncherConfigGen {
     }
 
     private int calculateCrc32(Path jarPath) throws IOException {
-        try (var source = Okio.buffer(Okio.source(jarPath));
-                var sink = Crc32Sink.of(Okio.blackhole())) {
-            source.readAll(sink);
-            return sink.crc32();
+        var crc32 = new CRC32();
+
+        try (var stream = Files.newInputStream(jarPath)) {
+            var buffer = new byte[4096];
+            var read = -1;
+
+            while ((read = stream.read(buffer)) != -1) {
+                crc32.update(buffer, 0, read);
+            }
+            return (int) crc32.getValue();
         }
     }
 
     private String calculateSha256(Path jarPath) throws IOException {
-        try (var source = Okio.buffer(Okio.source(jarPath));
-                var sink = HashingSink.sha256(Okio.blackhole())) {
-            source.readAll(sink);
-            return sink.hash().hex();
+        try {
+            var sha256 = MessageDigest.getInstance("SHA-256");
+
+            try (var stream = Files.newInputStream(jarPath)) {
+                var buffer = new byte[4096];
+                var read = -1;
+
+                while ((read = stream.read(buffer)) != -1) {
+                    sha256.update(buffer, 0, read);
+                }
+                return HexFormat.of().formatHex(sha256.digest());
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 
