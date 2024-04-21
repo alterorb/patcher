@@ -1,6 +1,7 @@
 package net.alterorb.patcher.transformer;
 
 import net.alterorb.patcher.AsmUtils;
+import net.alterorb.patcher.FunOrbGame;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -23,7 +24,7 @@ public class ZStringDecrypter implements Transformer {
     private static final Type[] CHAR_ARRAY_DECRYPT_ARGUMENTS = {Type.getType(char[].class)};
 
     @Override
-    public void transform(List<ClassNode> classNodes) {
+    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 

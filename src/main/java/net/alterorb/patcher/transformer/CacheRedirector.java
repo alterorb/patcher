@@ -1,5 +1,6 @@
 package net.alterorb.patcher.transformer;
 
+import net.alterorb.patcher.FunOrbGame;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -23,7 +24,7 @@ public class CacheRedirector implements Transformer {
     private static final String JAGEX_STORE = ".jagex_cache_";
 
     @Override
-    public void transform(List<ClassNode> classNodes) {
+    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 

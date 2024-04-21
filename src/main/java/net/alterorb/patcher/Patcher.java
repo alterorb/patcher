@@ -77,13 +77,14 @@ public class Patcher {
     }
 
     private static RSAPublicKeySpec loadPubKeyFromUrl(RSAKeyFactory keyFactory, URI uri) throws IOException, InterruptedException {
-        var client = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(uri)
-                                 .build();
-        var response = client.send(request, BodyHandlers.ofInputStream());
+        try (var client = HttpClient.newHttpClient()) {
+            var request = HttpRequest.newBuilder(uri)
+                                     .build();
+            var response = client.send(request, BodyHandlers.ofInputStream());
 
-        try (var inputStream = response.body()) {
-            return keyFactory.publicKeySpecFrom(inputStream);
+            try (var inputStream = response.body()) {
+                return keyFactory.publicKeySpecFrom(inputStream);
+            }
         }
     }
 
@@ -125,18 +126,18 @@ public class Patcher {
 
             if (Files.exists(jarPath)) {
                 var targetJarPath = outDir.resolve(game.internalName() + ".jar");
-                patch(jarPath, targetJarPath);
+                patch(game, jarPath, targetJarPath);
             } else {
                 LOGGER.warn("Could not find jar {} at the source directory.", game.internalName());
             }
         }
     }
 
-    private void patch(Path source, Path target) throws IOException {
+    private void patch(FunOrbGame game, Path source, Path target) throws IOException {
         LOGGER.info("Patching {}", target.getFileName());
         var classNodes = loadJar(source);
         for (Transformer transformer : transformers) {
-            transformer.transform(classNodes);
+            transformer.transform(game, classNodes);
         }
         saveJar(target, classNodes);
     }

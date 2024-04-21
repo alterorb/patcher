@@ -1,6 +1,7 @@
 package net.alterorb.patcher.transformer;
 
 import net.alterorb.patcher.AsmUtils;
+import net.alterorb.patcher.FunOrbGame;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LdcInsnNode;
@@ -22,7 +23,7 @@ public class RSAPubKeyReplacer implements Transformer {
     }
 
     @Override
-    public void transform(List<ClassNode> classNodes) {
+    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 
