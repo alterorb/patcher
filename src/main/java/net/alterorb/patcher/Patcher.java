@@ -7,6 +7,7 @@ import net.alterorb.patcher.transformer.RSAPubKeyReplacer;
 import net.alterorb.patcher.transformer.Transformer;
 import net.alterorb.patcher.transformer.ZStringArrayInliner;
 import net.alterorb.patcher.transformer.ZStringDecrypter;
+import net.alterorb.patcher.transformer.dungeonassault.SpriteGlowEffectTransformer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -54,7 +55,8 @@ public class Patcher {
                 new CheckhostTransformer(),
                 new Jdk9MouseFixer(),
                 new RSAPubKeyReplacer(oldKeySpec, newKeySpec),
-                new CacheRedirector()
+                new CacheRedirector(),
+                new SpriteGlowEffectTransformer()
         );
         return new Patcher(transformers, sourceDir, targetDir);
     }
