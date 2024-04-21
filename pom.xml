@@ -15,7 +15,7 @@
         <checkstyle.version>10.14.1</checkstyle.version>
         <asm.version>9.6</asm.version>
         <jopt.version>5.0.4</jopt.version>
-        <okio.version>3.9.0</okio.version>
+        <okio.version>1.17.5</okio.version>
         <jackson.version>2.16.2</jackson.version>
         <slf4j.version>2.0.12</slf4j.version>
         <logback.version>1.5.3</logback.version>
