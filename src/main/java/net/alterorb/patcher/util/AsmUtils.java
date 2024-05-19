@@ -1,4 +1,4 @@
-package net.alterorb.patcher;
+package net.alterorb.patcher.util;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;

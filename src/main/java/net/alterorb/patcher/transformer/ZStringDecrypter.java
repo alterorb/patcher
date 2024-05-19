@@ -1,7 +1,6 @@
 package net.alterorb.patcher.transformer;
 
-import net.alterorb.patcher.AsmUtils;
-import net.alterorb.patcher.FunOrbGame;
+import net.alterorb.patcher.patcher.Context;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -15,6 +14,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static net.alterorb.patcher.util.AsmUtils.extractIntValue;
+import static net.alterorb.patcher.util.AsmUtils.findMethodByDescriptor;
+
 /*
  * This transformer decrypts the ZKM encrypted strings from the classes and removes the decryption methods.
  */
@@ -24,13 +26,13 @@ public class ZStringDecrypter implements Transformer {
     private static final Type[] CHAR_ARRAY_DECRYPT_ARGUMENTS = {Type.getType(char[].class)};
 
     @Override
-    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
+    public void transform(Context ctx, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 
     private void transform(ClassNode classNode) {
-        var stringDecryptMethod = AsmUtils.findMethodByDescriptor(classNode, Type.getType(char[].class), STRING_DECRYPT_ARGUMENTS);
-        var charDecryptMethod = AsmUtils.findMethodByDescriptor(classNode, Type.getType(String.class), CHAR_ARRAY_DECRYPT_ARGUMENTS);
+        var stringDecryptMethod = findMethodByDescriptor(classNode, Type.getType(char[].class), STRING_DECRYPT_ARGUMENTS);
+        var charDecryptMethod = findMethodByDescriptor(classNode, Type.getType(String.class), CHAR_ARRAY_DECRYPT_ARGUMENTS);
 
         if (stringDecryptMethod == null) {
             return;
@@ -75,7 +77,7 @@ public class ZStringDecrypter implements Transformer {
 
         for (var insnNode : method.instructions) {
             if (insnNode.getOpcode() == Opcodes.CALOAD) {
-                return AsmUtils.extractIntValue(insnNode.getNext());
+                return extractIntValue(insnNode.getNext());
             }
         }
         return -1;
@@ -90,9 +92,9 @@ public class ZStringDecrypter implements Transformer {
 
             for (int i = 0; i < labels.size(); i++) {
                 var abstractInsnNode = labels.get(i).getNext();
-                keys[i] = (byte) AsmUtils.extractIntValue(abstractInsnNode);
+                keys[i] = (byte) extractIntValue(abstractInsnNode);
             }
-            keys[4] = (byte) AsmUtils.extractIntValue(tableSwitchNode.dflt.getNext());
+            keys[4] = (byte) extractIntValue(tableSwitchNode.dflt.getNext());
             return keys;
         }
         return null;

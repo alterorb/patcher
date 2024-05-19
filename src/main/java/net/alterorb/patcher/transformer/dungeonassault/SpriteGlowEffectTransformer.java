@@ -1,6 +1,7 @@
 package net.alterorb.patcher.transformer.dungeonassault;
 
 import net.alterorb.patcher.FunOrbGame;
+import net.alterorb.patcher.patcher.Context;
 import net.alterorb.patcher.transformer.Transformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -10,7 +11,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.List;
 
-import static net.alterorb.patcher.AsmUtils.findMethodByDescriptor;
+import static net.alterorb.patcher.util.AsmUtils.findMethodByDescriptor;
 import static org.objectweb.asm.Type.INT_TYPE;
 import static org.objectweb.asm.Type.VOID_TYPE;
 
@@ -22,8 +23,8 @@ public class SpriteGlowEffectTransformer implements Transformer {
     private static final List<String> CLASSES_TO_TRANSFORM = List.of("gd", "pp");
 
     @Override
-    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
-        if (game != FunOrbGame.DUNGEON_ASSAULT) {
+    public void transform(Context ctx, List<ClassNode> classNodes) {
+        if (ctx.game() != FunOrbGame.DUNGEON_ASSAULT) {
             return;
         }
         classNodes.forEach(this::transform);

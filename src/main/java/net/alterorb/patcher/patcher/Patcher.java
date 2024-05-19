@@ -1,5 +1,11 @@
-package net.alterorb.patcher;
+package net.alterorb.patcher.patcher;
 
+import net.alterorb.patcher.Bootstrap;
+import net.alterorb.patcher.FunOrbGame;
+import net.alterorb.patcher.indentifier.DependsOn;
+import net.alterorb.patcher.indentifier.Identifier;
+import net.alterorb.patcher.indentifier.PacketIdentifier;
+import net.alterorb.patcher.indentifier.RsaPacketIdentifier;
 import net.alterorb.patcher.transformer.CacheRedirector;
 import net.alterorb.patcher.transformer.CheckhostTransformer;
 import net.alterorb.patcher.transformer.Jdk9MouseFixer;
@@ -8,6 +14,10 @@ import net.alterorb.patcher.transformer.Transformer;
 import net.alterorb.patcher.transformer.ZStringArrayInliner;
 import net.alterorb.patcher.transformer.ZStringDecrypter;
 import net.alterorb.patcher.transformer.dungeonassault.SpriteGlowEffectTransformer;
+import net.alterorb.patcher.util.RSAKeyFactory;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedMultigraph;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
@@ -25,6 +35,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -35,11 +46,13 @@ public class Patcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(Patcher.class);
 
     private final List<Transformer> transformers;
+    private final DirectedMultigraph<Identifier, DefaultEdge> identifiersGraph;
     private final Path srcDir;
     private final Path outDir;
 
-    private Patcher(List<Transformer> transformers, Path srcDir, Path targetDir) {
+    private Patcher(List<Transformer> transformers, DirectedMultigraph<Identifier, DefaultEdge> identifiersGraph, Path srcDir, Path targetDir) {
         this.transformers = transformers;
+        this.identifiersGraph = identifiersGraph;
         this.srcDir = srcDir;
         this.outDir = targetDir;
     }
@@ -58,7 +71,12 @@ public class Patcher {
                 new CacheRedirector(),
                 new SpriteGlowEffectTransformer()
         );
-        return new Patcher(transformers, sourceDir, targetDir);
+        var identifiers = List.of(
+                new RsaPacketIdentifier(),
+                new PacketIdentifier()
+        );
+        var identifiersGraph = buildIdentifiersGraph(identifiers);
+        return new Patcher(transformers, identifiersGraph, sourceDir, targetDir);
     }
 
     private static RSAPublicKeySpec loadOrGenerateNewPubKey(RSAKeyFactory keyFactory, String pubKey, Path targetDir) {
@@ -121,6 +139,32 @@ public class Patcher {
         return keyFactory.publicKeySpecFrom(inputStream);
     }
 
+    private static DirectedMultigraph<Identifier, DefaultEdge> buildIdentifiersGraph(List<Identifier> identifiers) {
+        var dependencyGraph = new DirectedMultigraph<Identifier, DefaultEdge>(DefaultEdge.class);
+        var identifierMap = new HashMap<Class<? extends Identifier>, Identifier>();
+
+        for (Identifier identifier : identifiers) {
+            dependencyGraph.addVertex(identifier);
+            identifierMap.put(identifier.getClass(), identifier);
+        }
+
+        for (Identifier identifier : identifiers) {
+            var dependsOn = identifier.getClass().getAnnotation(DependsOn.class);
+
+            if (dependsOn == null) {
+                continue;
+            }
+            var dependeeClass = dependsOn.value();
+            var dependantOn = identifierMap.get(dependeeClass);
+
+            if (dependantOn == null) {
+                throw new IllegalStateException("Class '" + identifier.getClass().getSimpleName() + "' depends on '" + dependsOn.value().getSimpleName() + "' but it is not registered to the graph");
+            }
+            dependencyGraph.addEdge(dependantOn, identifier);
+        }
+        return dependencyGraph;
+    }
+
     public void process() throws IOException {
         for (FunOrbGame game : FunOrbGame.values()) {
             var jarPath = srcDir.resolve(game.internalName() + ".jar");
@@ -128,18 +172,29 @@ public class Patcher {
 
             if (Files.exists(jarPath)) {
                 var targetJarPath = outDir.resolve(game.internalName() + ".jar");
-                patch(game, jarPath, targetJarPath);
+                var context = new Context(game);
+
+                patch(context, jarPath, targetJarPath);
             } else {
                 LOGGER.warn("Could not find jar {} at the source directory.", game.internalName());
             }
         }
     }
 
-    private void patch(FunOrbGame game, Path source, Path target) throws IOException {
+    private void patch(Context context, Path source, Path target) throws IOException {
         LOGGER.info("Patching {}", target.getFileName());
         var classNodes = loadJar(source);
-        for (Transformer transformer : transformers) {
-            transformer.transform(game, classNodes);
+        var iterator = new TopologicalOrderIterator<>(identifiersGraph);
+
+        iterator.forEachRemaining(identifier -> {
+            LOGGER.trace("Running identifier {}", identifier.getClass().getSimpleName());
+            for (var classNode : classNodes) {
+                identifier.identify(context, classNode);
+            }
+        });
+
+        for (var transformer : transformers) {
+            transformer.transform(context, classNodes);
         }
         saveJar(target, classNodes);
     }

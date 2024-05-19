@@ -1,4 +1,4 @@
-package net.alterorb.patcher;
+package net.alterorb.patcher.util;
 
 import java.io.IOException;
 import java.io.InputStream;

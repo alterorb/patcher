@@ -1,13 +1,14 @@
 package net.alterorb.patcher.transformer;
 
-import net.alterorb.patcher.AsmUtils;
-import net.alterorb.patcher.FunOrbGame;
+import net.alterorb.patcher.patcher.Context;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
 import java.security.spec.RSAPublicKeySpec;
 import java.util.List;
+
+import static net.alterorb.patcher.util.AsmUtils.findClinit;
 
 /*
  * This key replaces the RSA public key that is used to encrypt packets.
@@ -23,12 +24,12 @@ public class RSAPubKeyReplacer implements Transformer {
     }
 
     @Override
-    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
+    public void transform(Context ctx, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 
     private void transform(ClassNode classNode) {
-        var clinit = AsmUtils.findClinit(classNode);
+        var clinit = findClinit(classNode);
 
         if (clinit == null) {
             return;

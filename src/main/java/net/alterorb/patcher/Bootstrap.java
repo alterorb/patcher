@@ -2,6 +2,8 @@ package net.alterorb.patcher;
 
 import joptsimple.OptionParser;
 import joptsimple.ValueConverter;
+import net.alterorb.patcher.config.LauncherConfigGen;
+import net.alterorb.patcher.patcher.Patcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

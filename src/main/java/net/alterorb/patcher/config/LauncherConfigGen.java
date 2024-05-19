@@ -1,6 +1,7 @@
-package net.alterorb.patcher;
+package net.alterorb.patcher.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.alterorb.patcher.FunOrbGame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

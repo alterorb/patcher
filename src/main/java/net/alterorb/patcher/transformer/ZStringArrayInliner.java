@@ -1,7 +1,6 @@
 package net.alterorb.patcher.transformer;
 
-import net.alterorb.patcher.AsmUtils;
-import net.alterorb.patcher.FunOrbGame;
+import net.alterorb.patcher.patcher.Context;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -16,6 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+
+import static net.alterorb.patcher.util.AsmUtils.extractIntValue;
+import static net.alterorb.patcher.util.AsmUtils.findClinit;
+import static net.alterorb.patcher.util.AsmUtils.findField;
 
 /*
  * This transformer should be run after strings have already been decrypted, it performs the following transforms:
@@ -32,23 +35,23 @@ public class ZStringArrayInliner implements Transformer {
                     && fieldNode.desc.equals("[Ljava/lang/String;");
 
     @Override
-    public void transform(FunOrbGame game, List<ClassNode> classNodes) {
+    public void transform(Context ctx, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 
     private void transform(ClassNode classNode) {
-        var stringArrayField = AsmUtils.findField(classNode, ZKM_STRING_ARRAY);
+        var stringArrayField = findField(classNode, ZKM_STRING_ARRAY);
 
         if (stringArrayField == null) {
             return;
         }
-        LOGGER.debug("Processing class '{}'", classNode.name);
+        LOGGER.trace("Processing class '{}'", classNode.name);
         Predicate<FieldInsnNode> predicate = fieldInsn -> Objects.equals(fieldInsn.owner, classNode.name)
                 && Objects.equals(fieldInsn.name, stringArrayField.name)
                 && Objects.equals(fieldInsn.desc, "[Ljava/lang/String;");
 
         LOGGER.trace("stringArrayField={}", stringArrayField.name);
-        var clinit = AsmUtils.findClinit(classNode);
+        var clinit = findClinit(classNode);
         var constants = extractConstants(clinit, predicate);
 
         LOGGER.trace("clinit constants={}", Arrays.toString(constants));
@@ -56,14 +59,14 @@ public class ZStringArrayInliner implements Transformer {
 
         classNode.methods.forEach(method -> inlineStrings(method, predicate, constants));
         classNode.fields.remove(stringArrayField);
-        LOGGER.debug("Finished processing class '{}'", classNode.name);
+        LOGGER.trace("Finished processing class '{}'", classNode.name);
     }
 
     private Object[] extractConstants(MethodNode clinit, Predicate<FieldInsnNode> zStrArrayPredicate) {
         // The string array initialization is always the first instruction block in the clinit
         var iterator = clinit.instructions.iterator();
         // This is guaranteed safe because this code only runs if we find a zkm string array
-        var arraySize = AsmUtils.extractIntValue(iterator.next());
+        var arraySize = extractIntValue(iterator.next());
         var constants = new Object[arraySize];
 
         while (iterator.hasNext()) {
@@ -75,7 +78,7 @@ public class ZStringArrayInliner implements Transformer {
             }
 
             if (next instanceof LdcInsnNode ldcInsn) {
-                var idxInsn = AsmUtils.extractIntValue(ldcInsn.getPrevious());
+                var idxInsn = extractIntValue(ldcInsn.getPrevious());
                 constants[idxInsn] = ldcInsn.cst;
             }
         }
@@ -113,7 +116,7 @@ public class ZStringArrayInliner implements Transformer {
              */
             iterator.remove(); // GETSTATIC
             var bipushInsn = iterator.next();
-            int idx = AsmUtils.extractIntValue(bipushInsn);
+            int idx = extractIntValue(bipushInsn);
             iterator.remove(); // BIPUSH
             iterator.next();
             iterator.remove(); // AALOAD
