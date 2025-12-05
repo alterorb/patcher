@@ -1,6 +1,6 @@
 package net.alterorb.patcher.transformer;
 
-import net.alterorb.patcher.patcher.Context;
+import net.alterorb.patcher.patcher.TransformerContext;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -20,7 +20,7 @@ public class CacheRedirector implements Transformer {
     private static final String JAGEX_STORE = ".jagex_cache_";
 
     @Override
-    public void transform(Context ctx, List<ClassNode> classNodes) {
+    public void transform(TransformerContext ctx, List<ClassNode> classNodes) {
         classNodes.forEach(this::transform);
     }
 

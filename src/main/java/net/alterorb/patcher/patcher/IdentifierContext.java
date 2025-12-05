@@ -8,18 +8,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
-public class Context {
+public class IdentifierContext {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Context.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdentifierContext.class);
 
-    private final Map<String, IdentifiedClass> identifiedClasses = new HashMap<>();
-    private final Map<String, IdentifiedStaticField> identifiedStaticFields = new HashMap<>();
+    final LinkedHashMap<String, IdentifiedClass> identifiedClasses = new LinkedHashMap<>();
+    final LinkedHashMap<String, IdentifiedStaticField> identifiedStaticFields = new LinkedHashMap<>();
 
-    private final FunOrbGame game;
+    final FunOrbGame game;
 
-    public Context(FunOrbGame game) {
+    public IdentifierContext(FunOrbGame game) {
         this.game = game;
     }
 
@@ -76,6 +78,16 @@ public class Context {
             methods.put(name, methodNode);
             LOGGER.debug("Identified method '{}{}' as '{}'", methodNode.name, methodNode.desc, name);
             return this;
+        }
+
+        public IdentifiedClass identifyMethodOrFail(String name, Predicate<MethodNode> methodIdentifier) {
+            for (var methodNode : node.methods) {
+                if (methodIdentifier.test(methodNode)) {
+                    identifyMethod(name, methodNode);
+                    return this;
+                }
+            }
+            throw new IllegalStateException("Failed to identify method '" + name + "'");
         }
 
         public String className() {

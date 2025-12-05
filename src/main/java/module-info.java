@@ -5,6 +5,8 @@ module net.alterorb.patcher {
     requires jopt.simple;
     requires com.fasterxml.jackson.databind;
     requires org.jgrapht.core;
+    requires org.objectweb.asm.util;
+    requires org.objectweb.asm;
     opens net.alterorb.patcher to com.fasterxml.jackson.databind;
     opens net.alterorb.patcher.util to com.fasterxml.jackson.databind;
     opens net.alterorb.patcher.config to com.fasterxml.jackson.databind;

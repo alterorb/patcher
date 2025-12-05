@@ -1,7 +1,7 @@
 package net.alterorb.patcher.transformer.dungeonassault;
 
 import net.alterorb.patcher.FunOrbGame;
-import net.alterorb.patcher.patcher.Context;
+import net.alterorb.patcher.patcher.TransformerContext;
 import net.alterorb.patcher.transformer.Transformer;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -23,7 +23,7 @@ public class SpriteGlowEffectTransformer implements Transformer {
     private static final List<String> CLASSES_TO_TRANSFORM = List.of("gd", "pp");
 
     @Override
-    public void transform(Context ctx, List<ClassNode> classNodes) {
+    public void transform(TransformerContext ctx, List<ClassNode> classNodes) {
         if (ctx.game() != FunOrbGame.DUNGEON_ASSAULT) {
             return;
         }

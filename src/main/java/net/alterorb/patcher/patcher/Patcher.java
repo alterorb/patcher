@@ -8,6 +8,7 @@ import net.alterorb.patcher.indentifier.PacketIdentifier;
 import net.alterorb.patcher.indentifier.RsaPacketIdentifier;
 import net.alterorb.patcher.transformer.CacheRedirector;
 import net.alterorb.patcher.transformer.CheckhostTransformer;
+import net.alterorb.patcher.transformer.ComplexPasswords;
 import net.alterorb.patcher.transformer.Jdk9MouseFixer;
 import net.alterorb.patcher.transformer.RSAPubKeyReplacer;
 import net.alterorb.patcher.transformer.Transformer;
@@ -69,7 +70,8 @@ public class Patcher {
                 new Jdk9MouseFixer(),
                 new RSAPubKeyReplacer(oldKeySpec, newKeySpec),
                 new CacheRedirector(),
-                new SpriteGlowEffectTransformer()
+                new SpriteGlowEffectTransformer(),
+                new ComplexPasswords()
         );
         var identifiers = List.of(
                 new RsaPacketIdentifier(),
@@ -172,7 +174,7 @@ public class Patcher {
 
             if (Files.exists(jarPath)) {
                 var targetJarPath = outDir.resolve(game.internalName() + ".jar");
-                var context = new Context(game);
+                var context = new IdentifierContext(game);
 
                 patch(context, jarPath, targetJarPath);
             } else {
@@ -181,7 +183,7 @@ public class Patcher {
         }
     }
 
-    private void patch(Context context, Path source, Path target) throws IOException {
+    private void patch(IdentifierContext context, Path source, Path target) throws IOException {
         LOGGER.info("Patching {}", target.getFileName());
         var classNodes = loadJar(source);
         var iterator = new TopologicalOrderIterator<>(identifiersGraph);
@@ -193,8 +195,9 @@ public class Patcher {
             }
         });
 
+        var transformerContext = new TransformerContext(context);
         for (var transformer : transformers) {
-            transformer.transform(context, classNodes);
+            transformer.transform(transformerContext, classNodes);
         }
         saveJar(target, classNodes);
     }
@@ -226,7 +229,7 @@ public class Patcher {
             var enums = jarFile.entries();
 
             while (enums.hasMoreElements()) {
-                var entry = (JarEntry) enums.nextElement();
+                var entry = enums.nextElement();
 
                 if (!entry.getName().endsWith(".class")) {
                     continue;

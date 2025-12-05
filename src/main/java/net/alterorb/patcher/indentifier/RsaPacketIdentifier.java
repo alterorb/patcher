@@ -1,6 +1,6 @@
 package net.alterorb.patcher.indentifier;
 
-import net.alterorb.patcher.patcher.Context;
+import net.alterorb.patcher.patcher.IdentifierContext;
 import net.alterorb.patcher.util.ClassStructure;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -16,7 +16,7 @@ import static net.alterorb.patcher.util.AsmUtils.findField;
 public class RsaPacketIdentifier implements Identifier {
 
     @Override
-    public void identify(Context ctx, ClassNode node) {
+    public void identify(IdentifierContext ctx, ClassNode node) {
         var classStructure = ClassStructure.infer(node);
         var clinit = classStructure.classInit();
 
